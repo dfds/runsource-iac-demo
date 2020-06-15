@@ -1,0 +1,5 @@
+screen mode id:i:1
+desktopwidth:i:1440
+desktopheight:i:900
+full address:s:${address}
+username:s:${username}

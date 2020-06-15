@@ -1,0 +1,5 @@
+<powershell>
+$ErrorActionPreference = 'Stop'
+Get-WindowsFeature | ? { $_.Name -eq 'RSAT-AD-Tools' } | Add-WindowsFeature
+</powershell>
+<runAsLocalSystem>true</runAsLocalSystem>

@@ -1,0 +1,4 @@
+<powershell>
+$ErrorActionPreference = 'Stop'
+</powershell>
+<runAsLocalSystem>true</runAsLocalSystem>
