@@ -2,6 +2,9 @@
 **/.terraform/*
 **/.terragrunt-cache/*
 
+# Ignore generated RDP files
+*.rdp
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
