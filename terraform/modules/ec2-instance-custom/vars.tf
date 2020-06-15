@@ -16,9 +16,9 @@ variable "name" {
   type = string
 }
 
-variable "admin_username" {
-  type = string
-}
+# variable "admin_username" {
+#   type = string
+# }
 
 variable "ami_platform_filters" {
   type = list(string)
