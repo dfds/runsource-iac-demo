@@ -1,29 +1,39 @@
-output "admin_username" {
+output "ad_admin_username" {
   value = module.activedirectory.admin_username
 }
 
-output "server1_dns_alias" {
-  value = "${element(module.ec2_dns_record_server1.record_name, 0)}.${data.aws_route53_zone.workload.name}"
+output "admin_server_dns_alias" {
+  value = "${element(module.ec2_dns_record_admin.record_name, 0)}.${data.aws_route53_zone.workload.name}"
 }
 
-output "server1_public_dns" {
-  value = module.ec2_instance_server1.public_dns
+output "admin_server_public_dns" {
+  value = module.ec2_instance_admin.public_dns
 }
 
-# output "server1_password_data" {
-#   value = module.ec2_instance_server1.password_data
-#   sensitive = true
+# output "admin_server_password_data" {
+#   value = module.ec2_instance_admin.password_data
 # }
 
-output "server2_dns_alias" {
-  value = "${element(module.ec2_dns_record_server2.record_name, 0)}.${data.aws_route53_zone.workload.name}"
+output "web1_server_dns_alias" {
+  value = "${element(module.ec2_dns_record_web1.record_name, 0)}.${data.aws_route53_zone.workload.name}"
 }
 
-output "server2_public_dns" {
-  value = module.ec2_instance_server2.public_dns
+output "web1_server_public_dns" {
+  value = module.ec2_instance_web1.public_dns
 }
 
-# output "server2_password_data" {
-#   value = module.ec2_instance_server2.password_data
-#   sensitive = true
+output "web1_server_password" {
+  value = module.ec2_instance_web1.password
+}
+
+# output "web1_server_password_data" {
+#   value = module.ec2_instance_web1.password_data
 # }
+
+output "web2_server_dns_alias" {
+  value = "${element(module.ec2_dns_record_web2.record_name, 0)}.${data.aws_route53_zone.workload.name}"
+}
+
+output "web2_server_public_dns" {
+  value = module.ec2_instance_web2.public_dns
+}

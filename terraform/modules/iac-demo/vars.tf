@@ -56,34 +56,54 @@ variable "ec2_private_key_path" {
 
 
 # --------------------------------------------------
-# Server 1
+# Admin server
 # --------------------------------------------------
 
-variable "server1_name" {
+variable "admin_server_name" {
   type = string
 }
 
-variable "server1_instance_type" {
+variable "admin_server_instance_type" {
   type    = string
 }
 
-variable "server1_windows_server_version" {
+variable "admin_server_windows_server_version" {
   type    = string
+  default = ""
 }
 
 
 # --------------------------------------------------
-# Server 2
+# Web server 1
 # --------------------------------------------------
 
-variable "server2_name" {
+variable "web1_server_name" {
   type = string
 }
 
-variable "server2_instance_type" {
+variable "web1_server_instance_type" {
   type    = string
 }
 
-variable "server2_windows_server_version" {
+variable "web1_server_windows_server_version" {
   type    = string
+  default = ""
+}
+
+
+# --------------------------------------------------
+# Web server 2
+# --------------------------------------------------
+
+variable "web2_server_name" {
+  type = string
+}
+
+variable "web2_server_instance_type" {
+  type    = string
+}
+
+variable "web2_server_windows_server_version" {
+  type    = string
+  default = ""
 }

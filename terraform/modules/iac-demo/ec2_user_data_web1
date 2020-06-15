@@ -1,4 +1,5 @@
 <powershell>
 $ErrorActionPreference = 'Stop'
+Install-WindowsFeature -name Web-Server -IncludeManagementTools
 </powershell>
 <runAsLocalSystem>true</runAsLocalSystem>

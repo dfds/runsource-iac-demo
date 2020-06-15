@@ -77,6 +77,16 @@ module "securitygrouprule_rdp_udp" {
   to_port           = 3389
 }
 
+module "securitygrouprule_http" {
+  source            = "C:/code/infrastructure-modules//_sub/compute/ec2-sgrule-cidr"
+  security_group_id = module.securitygroup.id
+  description       = "Allow HTTP access from internet"
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/24"]
+  from_port         = 80
+  to_port           = 80
+}
+
 
 # --------------------------------------------------
 # Internet access
@@ -161,23 +171,23 @@ resource "aws_ssm_document" "doc" {
 
 
 # --------------------------------------------------
-# Server 1
+# Admin server
 # --------------------------------------------------
 
-data "template_file" "user_data_server1" {
-  template = file("${path.module}/ec2_user_data_server1")
+data "template_file" "user_data_admin" {
+  template = file("${path.module}/ec2_user_data_admin")
   vars = {
   }
 }
 
-module "ec2_instance_server1" {
+module "ec2_instance_admin" {
   source                      = "C:/code/infrastructure-modules//_sub/compute/ec2-instance"
-  instance_type               = var.server1_instance_type
+  instance_type               = var.admin_server_instance_type
   key_name                    = module.ec2_keypair.key_name
-  name                        = "${local.default_resource_name}_${var.server1_name}"
-  user_data                   = data.template_file.user_data_server1.rendered
+  name                        = "${local.default_resource_name}_${var.admin_server_name}"
+  user_data                   = data.template_file.user_data_admin.rendered
   ami_platform_filters        = ["windows"]
-  ami_name_filters            = ["*Server-${var.server1_windows_server_version}-English-Full-Base*"]
+  ami_name_filters            = ["*Server-${var.admin_server_windows_server_version}-English-Full-Base*"]
   ami_owners                  = ["amazon"]
   vpc_security_group_ids      = [module.securitygroup.id]
   subnet_id                   = element(module.subnets.ids, 2)
@@ -186,83 +196,130 @@ module "ec2_instance_server1" {
   aws_managed_policy          = "AmazonEC2RoleforSSM"
 }
 
-module "ec2_dns_record_server1" {
+module "ec2_dns_record_admin" {
   source       = "C:/code/infrastructure-modules//_sub/network/route53-record"
   zone_id      = data.aws_route53_zone.workload.id
-  record_name  = [var.server1_name]
+  record_name  = [var.admin_server_name]
   record_type  = "CNAME"
-  record_value = module.ec2_instance_server1.public_dns
+  record_value = module.ec2_instance_admin.public_dns
   record_ttl   = 60
 }
 
-resource "aws_ssm_association" "assoc_server1" {
+resource "aws_ssm_association" "assoc_admin" {
   name        = aws_ssm_document.doc.name
-  instance_id = module.ec2_instance_server1.id
+  instance_id = module.ec2_instance_admin.id
 }
 
-data "template_file" "rdpfile_server1" {
+data "template_file" "rdpfile_admin" {
   template = file("${path.module}/rdp_template")
   vars = {
-    address = "${element(module.ec2_dns_record_server1.record_name, 0)}.${data.aws_route53_zone.workload.name}"
+    address = "${element(module.ec2_dns_record_admin.record_name, 0)}.${data.aws_route53_zone.workload.name}"
     username = module.activedirectory.admin_username
   }
 }
 
-resource "local_file" "rdpfile_server1" {
-  content = data.template_file.rdpfile_server1.rendered
-  filename = "C:/code/runsource-iac-demo/terraform//${local.default_resource_name}_${var.server1_name}.rdp"
+resource "local_file" "rdpfile_admin" {
+  content = data.template_file.rdpfile_admin.rendered
+  filename = "C:/code/runsource-iac-demo/terraform//${local.default_resource_name}_${var.admin_server_name}.rdp"
 }
 
 
 # --------------------------------------------------
-# Server 2
+# Web server 1
 # --------------------------------------------------
 
-data "template_file" "user_data_server2" {
-  template = file("${path.module}/ec2_user_data_server2")
+data "template_file" "user_data_web1" {
+  template = file("${path.module}/ec2_user_data_web1")
   vars = {
   }
 }
 
-module "ec2_instance_server2" {
+module "ec2_instance_web1" {
   source                      = "C:/code/infrastructure-modules//_sub/compute/ec2-instance"
-  instance_type               = var.server2_instance_type
+  instance_type               = var.web1_server_instance_type
   key_name                    = module.ec2_keypair.key_name
-  name                        = "${local.default_resource_name}_${var.server2_name}"
-  user_data                   = data.template_file.user_data_server2.rendered
+  name                        = "${local.default_resource_name}_${var.web1_server_name}"
+  user_data                   = data.template_file.user_data_web1.rendered
   ami_platform_filters        = ["windows"]
-  ami_name_filters            = ["*Server-${var.server2_windows_server_version}-English-Full-Base*"]
+  ami_name_filters            = ["*Server-${var.web1_server_windows_server_version}-English-Full-Base*"]
   ami_owners                  = ["amazon"]
   vpc_security_group_ids      = [module.securitygroup.id]
   subnet_id                   = element(module.subnets.ids, 2)
   associate_public_ip_address = true
   get_password_data           = true
+  private_key_path            = "C:/Users/rasmus/.ssh/id_rsa_ec2_sandbox"
   aws_managed_policy          = "AmazonEC2RoleforSSM"
 }
 
-module "ec2_dns_record_server2" {
+module "ec2_dns_record_web1" {
   source       = "C:/code/infrastructure-modules//_sub/network/route53-record"
   zone_id      = data.aws_route53_zone.workload.id
-  record_name  = [var.server2_name]
+  record_name  = [var.web1_server_name]
   record_type  = "CNAME"
-  record_value = module.ec2_instance_server2.public_dns
+  record_value = module.ec2_instance_web1.public_dns
   record_ttl   = 60
 }
 
-resource "aws_ssm_association" "assoc_server2" {
+resource "aws_ssm_association" "assoc_web1" {
   name        = aws_ssm_document.doc.name
-  instance_id = module.ec2_instance_server2.id
+  instance_id = module.ec2_instance_web1.id
 }
 
-data "template_file" "rdpfile_server2" {
+data "template_file" "rdpfile_web1" {
   template = file("${path.module}/rdp_template")
   vars = {
-    address = "${element(module.ec2_dns_record_server2.record_name, 0)}.${data.aws_route53_zone.workload.name}"
+    address = "${element(module.ec2_dns_record_web1.record_name, 0)}.${data.aws_route53_zone.workload.name}"
     username = module.activedirectory.admin_username
   }
 }
 
-resource "local_file" "rdpfile_server2" {
-  content = data.template_file.rdpfile_server2.rendered
-  filename = "C:/code/runsource-iac-demo/terraform/${local.default_resource_name}_${var.server2_name}.rdp"
+resource "local_file" "rdpfile_web1" {
+  content = data.template_file.rdpfile_web1.rendered
+  filename = "C:/code/runsource-iac-demo/terraform/${local.default_resource_name}_${var.web1_server_name}.rdp"
+}
+
+
+# --------------------------------------------------
+# Web server 2
+# --------------------------------------------------
+
+module "ec2_instance_web2" {
+  source                      = "../ec2-instance-custom"
+  instance_type               = var.web2_server_instance_type
+  key_name                    = module.ec2_keypair.key_name
+  name                        = "${local.default_resource_name}_${var.web2_server_name}"
+  ami_platform_filters        = ["windows"]
+  ami_name_filters            = ["web2-*"]
+  ami_owners                  = ["944250853760"]
+  vpc_security_group_ids      = [module.securitygroup.id]
+  subnet_id                   = element(module.subnets.ids, 2)
+  associate_public_ip_address = true
+  aws_managed_policy          = "AmazonEC2RoleforSSM"
+}
+
+module "ec2_dns_record_web2" {
+  source       = "C:/code/infrastructure-modules//_sub/network/route53-record"
+  zone_id      = data.aws_route53_zone.workload.id
+  record_name  = [var.web2_server_name]
+  record_type  = "CNAME"
+  record_value = module.ec2_instance_web2.public_dns
+  record_ttl   = 60
+}
+
+resource "aws_ssm_association" "assoc_web2" {
+  name        = aws_ssm_document.doc.name
+  instance_id = module.ec2_instance_web2.id
+}
+
+data "template_file" "rdpfile_web2" {
+  template = file("${path.module}/rdp_template")
+  vars = {
+    address = "${element(module.ec2_dns_record_web2.record_name, 0)}.${data.aws_route53_zone.workload.name}"
+    username = "Administrator"
+  }
+}
+
+resource "local_file" "rdpfile_web2" {
+  content = data.template_file.rdpfile_web2.rendered
+  filename = "C:/code/runsource-iac-demo/terraform/${local.default_resource_name}_${var.web2_server_name}.rdp"
 }

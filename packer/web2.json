@@ -1,0 +1,55 @@
+{
+    "variables": {
+        "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+        "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+        "region": "eu-west-1"
+    },
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "access_key": "{{ user `aws_access_key` }}",
+            "secret_key": "{{ user `aws_secret_key` }}",
+            "region": "{{ user `region` }}",
+            "instance_type": "t3.small",
+            "source_ami_filter": {
+                "filters": {
+                    "virtualization-type": "hvm",
+                    "name": "*Windows_Server-2016-English-Full-Base*",
+                    "root-device-type": "ebs"
+                },
+                "most_recent": true,
+                "owners": "amazon"
+            },
+            "ami_name": "web2-{{timestamp}}",
+            "user_data_file": "./web2_bootstrap",
+            "communicator": "winrm",
+            "winrm_username": "Administrator",
+            "winrm_password": "SuperS3cr3t!!!!"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "powershell",
+            "environment_vars": [
+                "DEVOPS_LIFE_IMPROVER=PACKER"
+            ],
+            "inline": [
+                "Write-Host \"HELLO NEW USER; WELCOME TO $Env:DEVOPS_LIFE_IMPROVER\"",
+                "Write-Host \"You need to use backtick escapes when using\"",
+                "Write-Host \"characters such as DOLLAR`$ directly in a command\"",
+                "Write-Host \"or in your own scripts.\""
+            ]
+        },
+        {
+            "type": "powershell",
+            "inline": [
+                "Install-WindowsFeature -name Web-Server -IncludeManagementTools"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "./web2.htm",
+            "destination": "C:/inetpub/wwwroot/Default.htm"
+        }
+    ]
+}
