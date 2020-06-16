@@ -21,27 +21,6 @@ variable "workload_dns_zone_name" {
 
 
 # --------------------------------------------------
-# Active Directory
-# --------------------------------------------------
-
-variable "ad_name" {
-  type        = string
-  description = "The fully qualified name for the directory, such as corp.example.com"
-}
-
-variable "ad_password" {
-  type        = string
-  description = "The password for the directory administrator"
-}
-
-variable "ad_edition" {
-  type        = string
-  default     = "Standard"
-  description = "The MicrosoftAD edition (Standard or Enterprise)"
-}
-
-
-# --------------------------------------------------
 # Server common
 # --------------------------------------------------
 
@@ -50,24 +29,6 @@ variable "ec2_public_key" {
 }
 
 variable "ec2_private_key_path" {
-  type    = string
-  default = ""
-}
-
-
-# --------------------------------------------------
-# Admin server
-# --------------------------------------------------
-
-variable "admin_server_name" {
-  type = string
-}
-
-variable "admin_server_instance_type" {
-  type    = string
-}
-
-variable "admin_server_windows_server_version" {
   type    = string
   default = ""
 }

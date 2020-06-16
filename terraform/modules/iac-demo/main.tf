@@ -10,12 +10,6 @@ terraform {
 provider "aws" {
   region  = var.aws_region
   version = "~> 2.43"
-
-  # profile = "qa-orgrole"
-
-  #   assume_role {
-  #     role_arn = var.aws_assume_role_arn
-  #   }
 }
 
 
@@ -53,7 +47,7 @@ module "subnets" {
 module "securitygroup" {
   source      = "C:/code/infrastructure-modules//_sub/compute/ec2-securitygroup"
   name        = local.default_resource_name
-  description = "ADSync QA"
+  description = local.default_resource_name
   vpc_id      = module.vpc.id
 }
 
@@ -87,6 +81,16 @@ module "securitygrouprule_http" {
   to_port           = 80
 }
 
+module "securitygrouprule_ssh" {
+  source            = "C:/code/infrastructure-modules//_sub/compute/ec2-sgrule-cidr"
+  security_group_id = module.securitygroup.id
+  description       = "Allow HTTP access from internet"
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 22
+  to_port           = 22
+}
+
 
 # --------------------------------------------------
 # Internet access
@@ -113,30 +117,6 @@ module "route_table_assoc" {
 
 
 # --------------------------------------------------
-# Active Directory
-# --------------------------------------------------
-
-module "activedirectory" {
-  source     = "C:/code/infrastructure-modules//_sub/security/active-directory"
-  name       = var.ad_name
-  password   = var.ad_password
-  edition    = var.ad_edition
-  subnet_ids = slice(module.subnets.ids, 0, 2) # exactly two subnets, in different AZs, are required
-}
-
-
-resource "aws_vpc_dhcp_options" "ad" {
-  domain_name         = var.ad_name
-  domain_name_servers = module.activedirectory.dns_ip_addresses
-}
-
-resource "aws_vpc_dhcp_options_association" "ad" {
-  vpc_id          = module.vpc.id
-  dhcp_options_id = aws_vpc_dhcp_options.ad.id
-}
-
-
-# --------------------------------------------------
 # Server general
 # --------------------------------------------------
 
@@ -146,87 +126,9 @@ module "ec2_keypair" {
   public_key = var.ec2_public_key
 }
 
-locals {
-  ssm_document_map = {
-    "schemaVersion" = "1.0"
-    "description"   = "Join an instance to a the ${var.ad_name} domain"
-    "runtimeConfig" = {
-      "aws:domainJoin" = {
-        "properties" = {
-          "directoryId"    = module.activedirectory.id
-          "directoryName"  = var.ad_name
-          "dnsIpAddresses" = module.activedirectory.dns_ip_addresses
-        }
-      }
-    }
-  }
-  ssm_document_json = jsonencode(local.ssm_document_map)
-}
-
-resource "aws_ssm_document" "doc" {
-  name          = "Join_${var.ad_name}_domain"
-  document_type = "Command"
-  content       = local.ssm_document_json
-}
-
 
 # --------------------------------------------------
-# Admin server
-# --------------------------------------------------
-
-data "template_file" "user_data_admin" {
-  template = file("${path.module}/ec2_user_data_admin")
-  vars = {
-  }
-}
-
-module "ec2_instance_admin" {
-  source                      = "C:/code/infrastructure-modules//_sub/compute/ec2-instance"
-  instance_type               = var.admin_server_instance_type
-  key_name                    = module.ec2_keypair.key_name
-  name                        = "${local.default_resource_name}_${var.admin_server_name}"
-  user_data                   = data.template_file.user_data_admin.rendered
-  ami_platform_filters        = ["windows"]
-  ami_name_filters            = ["*Server-${var.admin_server_windows_server_version}-English-Full-Base*"]
-  ami_owners                  = ["amazon"]
-  vpc_security_group_ids      = [module.securitygroup.id]
-  subnet_id                   = element(module.subnets.ids, 2)
-  associate_public_ip_address = true
-  get_password_data           = true
-  private_key_path            = var.ec2_private_key_path
-  aws_managed_policy          = "AmazonEC2RoleforSSM"
-}
-
-module "ec2_dns_record_admin" {
-  source       = "C:/code/infrastructure-modules//_sub/network/route53-record"
-  zone_id      = data.aws_route53_zone.workload.id
-  record_name  = [var.admin_server_name]
-  record_type  = "CNAME"
-  record_value = module.ec2_instance_admin.public_dns
-  record_ttl   = 60
-}
-
-resource "aws_ssm_association" "assoc_admin" {
-  name        = aws_ssm_document.doc.name
-  instance_id = module.ec2_instance_admin.id
-}
-
-data "template_file" "rdpfile_admin" {
-  template = file("${path.module}/rdp_template")
-  vars = {
-    address = "${element(module.ec2_dns_record_admin.record_name, 0)}.${data.aws_route53_zone.workload.name}"
-    username = module.activedirectory.admin_username
-  }
-}
-
-resource "local_file" "rdpfile_admin" {
-  content = data.template_file.rdpfile_admin.rendered
-  filename = "C:/code/runsource-iac-demo/terraform//${local.default_resource_name}_${var.admin_server_name}.rdp"
-}
-
-
-# --------------------------------------------------
-# Web server 1
+# Web server 1 - off-the-shelve image
 # --------------------------------------------------
 
 data "template_file" "user_data_web1" {
@@ -261,16 +163,11 @@ module "ec2_dns_record_web1" {
   record_ttl   = 60
 }
 
-resource "aws_ssm_association" "assoc_web1" {
-  name        = aws_ssm_document.doc.name
-  instance_id = module.ec2_instance_web1.id
-}
-
 data "template_file" "rdpfile_web1" {
   template = file("${path.module}/rdp_template")
   vars = {
     address = "${element(module.ec2_dns_record_web1.record_name, 0)}.${data.aws_route53_zone.workload.name}"
-    username = module.activedirectory.admin_username
+    username = ".\\administrator"
   }
 }
 
@@ -281,7 +178,7 @@ resource "local_file" "rdpfile_web1" {
 
 
 # --------------------------------------------------
-# Web server 2
+# Web server 2 - custom image
 # --------------------------------------------------
 
 module "ec2_instance_web2" {
@@ -307,16 +204,11 @@ module "ec2_dns_record_web2" {
   record_ttl   = 60
 }
 
-resource "aws_ssm_association" "assoc_web2" {
-  name        = aws_ssm_document.doc.name
-  instance_id = module.ec2_instance_web2.id
-}
-
 data "template_file" "rdpfile_web2" {
   template = file("${path.module}/rdp_template")
   vars = {
     address = "${element(module.ec2_dns_record_web2.record_name, 0)}.${data.aws_route53_zone.workload.name}"
-    username = "Administrator"
+    username = ".\\administrator"
   }
 }
 
