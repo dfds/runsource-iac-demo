@@ -14,7 +14,7 @@
             "source_ami_filter": {
                 "filters": {
                     "virtualization-type": "hvm",
-                    "name": "*Windows_Server-2016-English-Full-Base*",
+                    "name": "*Windows_Server-2019-English-Full-Base*",
                     "root-device-type": "ebs"
                 },
                 "most_recent": true,
@@ -30,20 +30,12 @@
     "provisioners": [
         {
             "type": "powershell",
-            "environment_vars": [
-                "DEVOPS_LIFE_IMPROVER=PACKER"
-            ],
             "inline": [
-                "Write-Host \"HELLO NEW USER; WELCOME TO $Env:DEVOPS_LIFE_IMPROVER\"",
-                "Write-Host \"You need to use backtick escapes when using\"",
-                "Write-Host \"characters such as DOLLAR`$ directly in a command\"",
-                "Write-Host \"or in your own scripts.\""
-            ]
-        },
-        {
-            "type": "powershell",
-            "inline": [
-                "Install-WindowsFeature -name Web-Server -IncludeManagementTools"
+                "Install-WindowsFeature -name Web-Server -IncludeManagementTools",
+                "Get-WindowsCapability -Online -Name Openssh.server* | Add-WindowsCapability -Online",
+                "Set-Service sshd -StartupType Automatic",
+                "Start-Service sshd",
+                "New-ItemProperty -Path \"HKLM:\\SOFTWARE\\OpenSSH\" -Name DefaultShell -Value \"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\"  -PropertyType String -Force"
             ]
         },
         {

@@ -38,9 +38,4 @@ Set-Service -Name WinRM -StartupType Automatic
 netsh advfirewall firewall set rule name="Windows Remote Management (HTTP-In)" new action=allow localip=any remoteip=any
 Start-Service -Name WinRM
 
-Get-WindowsCapability -Online -Name Openssh.server* | Add-WindowsCapability -Online
-New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
-Set-Service sshd -StartupType Automatic
-Start-Service sshd
-
 </powershell>
