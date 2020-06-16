@@ -1,0 +1,1 @@
+terragrunt init && terragrunt apply -var="ec2_private_key_path=C:\Users\raras\.ssh\id_rsa_ec2_sandbox"

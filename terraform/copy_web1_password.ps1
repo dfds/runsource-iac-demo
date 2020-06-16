@@ -1,0 +1,1 @@
+terragrunt output web1_server_password | scb
