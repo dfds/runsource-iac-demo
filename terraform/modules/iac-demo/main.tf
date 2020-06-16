@@ -72,7 +72,7 @@ module "securitygrouprule_rdp_udp" {
   security_group_id = module.securitygroup.id
   description       = "Allow RDP access from internet"
   protocol          = "udp"
-  cidr_blocks       = ["0.0.0.0/24"]
+  cidr_blocks       = ["0.0.0.0/0"]
   from_port         = 3389
   to_port           = 3389
 }
@@ -82,7 +82,7 @@ module "securitygrouprule_http" {
   security_group_id = module.securitygroup.id
   description       = "Allow HTTP access from internet"
   protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/24"]
+  cidr_blocks       = ["0.0.0.0/0"]
   from_port         = 80
   to_port           = 80
 }
@@ -193,6 +193,7 @@ module "ec2_instance_admin" {
   subnet_id                   = element(module.subnets.ids, 2)
   associate_public_ip_address = true
   get_password_data           = true
+  private_key_path            = var.ec2_private_key_path
   aws_managed_policy          = "AmazonEC2RoleforSSM"
 }
 
@@ -247,7 +248,7 @@ module "ec2_instance_web1" {
   subnet_id                   = element(module.subnets.ids, 2)
   associate_public_ip_address = true
   get_password_data           = true
-  private_key_path            = "C:/Users/rasmus/.ssh/id_rsa_ec2_sandbox"
+  private_key_path            = var.ec2_private_key_path
   aws_managed_policy          = "AmazonEC2RoleforSSM"
 }
 
@@ -284,7 +285,7 @@ resource "local_file" "rdpfile_web1" {
 # --------------------------------------------------
 
 module "ec2_instance_web2" {
-  source                      = "../ec2-instance-custom"
+  source                      = "C:/code/infrastructure-modules//_sub/compute/ec2-instance"
   instance_type               = var.web2_server_instance_type
   key_name                    = module.ec2_keypair.key_name
   name                        = "${local.default_resource_name}_${var.web2_server_name}"
