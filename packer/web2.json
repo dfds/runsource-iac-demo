@@ -31,11 +31,7 @@
         {
             "type": "powershell",
             "inline": [
-                "Install-WindowsFeature -name Web-Server -IncludeManagementTools",
-                "Get-WindowsCapability -Online -Name Openssh.server* | Add-WindowsCapability -Online",
-                "Set-Service sshd -StartupType Automatic",
-                "Start-Service sshd",
-                "New-ItemProperty -Path \"HKLM:\\SOFTWARE\\OpenSSH\" -Name DefaultShell -Value \"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\"  -PropertyType String -Force"
+                "Install-WindowsFeature -name Web-Server -IncludeManagementTools"
             ]
         },
         {
