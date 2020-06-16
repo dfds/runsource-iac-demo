@@ -51,6 +51,15 @@ variable "web1_server_windows_server_version" {
   default = ""
 }
 
+variable "web1_server_ami_filter" {
+  type    = string
+  default = ""
+}
+
+variable "web1_server_ami_owner" {
+  type    = string
+  default = ""
+}
 
 # --------------------------------------------------
 # Web server 2
@@ -64,7 +73,12 @@ variable "web2_server_instance_type" {
   type    = string
 }
 
-variable "web2_server_windows_server_version" {
+variable "web2_server_ami_filter" {
+  type    = string
+  default = ""
+}
+
+variable "web2_server_ami_owner" {
   type    = string
   default = ""
 }

@@ -4,6 +4,8 @@ $ErrorActionPreference = 'Stop'
 
 Install-WindowsFeature -name Web-Server -IncludeManagementTools
 
+New-Item C:\inetpub\wwwroot -Type Directory -Force | Out-Null
+
 @"
 <html>
     <body>

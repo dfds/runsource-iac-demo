@@ -144,8 +144,8 @@ module "ec2_instance_web1" {
   name                        = "${local.default_resource_name}_${var.web1_server_name}"
   user_data                   = data.template_file.user_data_web1.rendered
   ami_platform_filters        = ["windows"]
-  ami_name_filters            = ["*Server-${var.web1_server_windows_server_version}-English-Full-Base*"]
-  ami_owners                  = ["amazon"]
+  ami_name_filters            = [var.web1_server_ami_filter]
+  ami_owners                  = [var.web1_server_ami_owner]
   vpc_security_group_ids      = [module.securitygroup.id]
   subnet_id                   = element(module.subnets.ids, 2)
   associate_public_ip_address = true
@@ -187,8 +187,8 @@ module "ec2_instance_web2" {
   key_name                    = module.ec2_keypair.key_name
   name                        = "${local.default_resource_name}_${var.web2_server_name}"
   ami_platform_filters        = ["windows"]
-  ami_name_filters            = ["web2-*"]
-  ami_owners                  = ["944250853760"]
+  ami_name_filters            = [var.web2_server_ami_filter]
+  ami_owners                  = [var.web2_server_ami_owner]
   vpc_security_group_ids      = [module.securitygroup.id]
   subnet_id                   = element(module.subnets.ids, 2)
   associate_public_ip_address = true
